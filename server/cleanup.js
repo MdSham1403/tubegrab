@@ -1,33 +1,21 @@
+// Deletes old files from the app's OWN temp folder only (never the system temp dir).
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 
-const TEMP_DIR = os.tmpdir();
-
-function cleanupTempFiles() {
-    const files = fs.readdirSync(TEMP_DIR);
-
-    const now = Date.now();
-
-    files.forEach(file => {
-        try {
-            const filePath = path.join(TEMP_DIR, file);
-
-            const stat = fs.statSync(filePath);
-
-            const ageHours =
-                (now - stat.mtimeMs) /
-                (1000 * 60 * 60);
-
-            if (ageHours > 1) {
-                fs.unlinkSync(filePath);
-
-                console.log(
-                    `Deleted old temp file: ${file}`
-                );
-            }
-        } catch (err) {}
-    });
+function cleanupTempFiles(dir, maxAgeMinutes = 30) {
+  let files;
+  try { files = fs.readdirSync(dir); } catch { return; }
+  const now = Date.now();
+  for (const file of files) {
+    try {
+      const p = path.join(dir, file);
+      const stat = fs.statSync(p);
+      if (stat.isFile() && now - stat.mtimeMs > maxAgeMinutes * 60 * 1000) {
+        fs.unlinkSync(p);
+        console.log(`[cleanup] removed ${file}`);
+      }
+    } catch {}
+  }
 }
 
 module.exports = cleanupTempFiles;

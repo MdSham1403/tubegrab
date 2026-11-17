@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 
-const API = '/api'
+// In production set VITE_API_URL to your backend URL (no trailing slash). Locally the Vite proxy handles /api.
+const API = ((import.meta.env.VITE_API_URL || '').replace(/\/$/, '')) + '/api'
 
 function formatBytes(bytes) {
   if (!bytes) return null

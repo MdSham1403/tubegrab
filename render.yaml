@@ -1,0 +1,17 @@
+# One-click backend deploy on Render (free plan). Frontend goes on Vercel/Netlify.
+services:
+  - type: web
+    name: tubegrab-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: YTDLP_JS_RUNTIME
+        value: node
+      - key: CORS_ORIGIN
+        sync: false   # set to your frontend URL, e.g. https://tubegrab.vercel.app

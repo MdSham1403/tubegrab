@@ -1,57 +1,42 @@
 # TubeGrab — YouTube Downloader
 
-Full-stack YouTube downloader. Downloads video **with audio** by using `yt-dlp` + `ffmpeg` to merge streams.
+Full-stack YouTube downloader (React + Express). Uses `yt-dlp` + `ffmpeg` to merge best video and audio into one MP4, or extract MP3.
 
-## Prerequisites
+For personal use. Respect YouTube's Terms of Service and copyright law.
 
-| Tool | Install |
-|------|---------|
-| Node.js 18+ | https://nodejs.org |
-| Python 3 | (usually pre-installed) |
-| yt-dlp | `pip install yt-dlp` |
-| ffmpeg | See below |
+## What's included
+- **Auto-updating yt-dlp**: on Linux the server downloads the latest yt-dlp on first start, refreshes it every 6 hours, and updates + retries once if a download fails. Locally it uses the `yt-dlp` on your PATH.
+- **No manual ffmpeg install**: bundled through `ffmpeg-static`.
+- Safer server: YouTube-only URL validation, input checks, rate limiting, concurrency cap, temp-file cleanup, CORS control.
 
-### Install ffmpeg
-
-**Ubuntu / Debian:**
-```bash
-sudo apt install ffmpeg
-```
-
-**macOS:**
-```bash
-brew install ffmpeg
-```
-
-**Windows:**
-Download from https://ffmpeg.org/download.html and add to PATH.
-
----
-
-## Setup & Run
+## Run locally
+Requirements: Node.js 18+, and `yt-dlp` on your PATH (Windows: `winget install yt-dlp`, or `pip install -U yt-dlp`).
 
 ```bash
-# 1. Install all dependencies
 npm run install:all
-npm install   # installs concurrently
-
-# 2. Start both servers (backend :3001, frontend :5173)
+npm install
 npm run dev
 ```
+Open http://localhost:5173 (backend on :3001).
 
-Open **http://localhost:5173** in your browser.
+## Deploy free (no Docker)
 
----
+### 1) Backend on Render
+1. Push this repo to GitHub.
+2. Render → **New → Web Service** → pick the repo (or use **Blueprint** with `render.yaml`).
+3. Settings: Root Directory `server`, Build `npm install`, Start `node index.js`, Instance **Free**.
+4. Environment: `YTDLP_JS_RUNTIME=node`, `CORS_ORIGIN=<your frontend URL>`.
+5. Copy the service URL, e.g. `https://tubegrab-api.onrender.com`.
 
-## How it works
+### 2) Frontend on Vercel or Netlify
+1. Import the repo, Root Directory `client`, build `npm run build`, output `dist`.
+2. Environment variable: `VITE_API_URL=https://tubegrab-api.onrender.com`
+3. Deploy, then put that URL into `CORS_ORIGIN` on Render.
 
-1. **`/api/info`** — runs `yt-dlp --dump-json` to get video metadata + available formats
-2. **`/api/download`** — runs `yt-dlp` with:
-   - **Video:** `-f "formatId+bestaudio" --merge-output-format mp4` → ffmpeg merges best video + best audio into a single MP4
-   - **Audio:** `-x --audio-format mp3 --audio-quality 320k` → extracts and converts to MP3
-3. The merged file is streamed directly to the browser as a download
+### Free-tier notes
+- Render's free service sleeps after ~15 min idle; the first request takes 30–50 s. yt-dlp is refreshed on every wake-up.
+- 512 MB RAM: try short videos / 720p first.
+- YouTube often blocks datacenter IPs ("confirm you're not a bot"). If so, either run locally or set `YTDLP_COOKIES_FILE` (Render → Secret Files) using a throwaway account.
 
-## Deploy (Railway)
-
-Backend is a plain Express app — deploy `server/` to Railway.  
-Frontend is a Vite app — deploy `client/` to Vercel, set `VITE_API_URL` to your Railway backend URL and update the proxy in `vite.config.js`.
+## Environment variables (server)
+See `server/.env.example`.
